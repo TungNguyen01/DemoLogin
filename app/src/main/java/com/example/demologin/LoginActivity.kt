@@ -1,7 +1,6 @@
 package com.example.demologin
 
-import android.content.ContentValues.TAG
-import android.content.Context
+
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -15,7 +14,9 @@ import com.example.demologin.model.LoginResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Response
+
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var emailEditText: EditText
@@ -41,24 +42,33 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun performLogin(email: String, password: String) {
-        val loginRequest = LoginRequest(email, password)
+        //val loginRequest = LoginRequest(email, password)
 
-        GlobalScope.launch(Dispatchers.Main) {
+        GlobalScope.launch(Dispatchers.IO) {
             try {
-                val response : Response<LoginResponse> = RetrofitClient.apiService.login(loginRequest)
+                val response : Response<LoginResponse> = RetrofitClient.apiService.login(email, password)
                 if (response.isSuccessful) {
                     val loginResponse: LoginResponse? = response.body()
+                    Log.d("tung", loginResponse.toString())
                     if (loginResponse != null) {
                         navigateToMainScreen()
                     }
                 } else {
-                    Toast.makeText(this@LoginActivity, "Login failed", Toast.LENGTH_SHORT).show()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@LoginActivity, "Login failed", Toast.LENGTH_SHORT).show()
+                    }
+
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@LoginActivity, "An error occurred", Toast.LENGTH_SHORT).show()
+                e.localizedMessage?.let { Log.d("tung", it) }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@LoginActivity, "An error occurred", Toast.LENGTH_SHORT).show()
+                }
+
             }
         }
     }
+
 
 
     private fun saveUserData(accessToken: String, customer: Customer) {
